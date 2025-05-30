@@ -1,33 +1,33 @@
 package com.unifoodie.model;
 
-import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
 import java.math.BigDecimal;
 
 @Data
-@Entity
-@Table(name = "menu_items")
+@Document(collection = "menu_items")
 public class MenuItem {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "item_id")
-    private Long id;
+    private String id;
 
-    @Column(nullable = false, length = 100)
+    @Field("name")
     private String name;
 
-    @Column(columnDefinition = "text")
+    @Field("description")
     private String description;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Field("price")
     private BigDecimal price;
 
-    @Column(length = 50)
+    @Field("category")
     private String category;
 
-    @Column(name = "image_url", columnDefinition = "text")
+    @Field("image_url")
     private String imageUrl;
 
-    @Column(nullable = false)
+    @Field("available")
     private boolean available = true;
-} 
+}

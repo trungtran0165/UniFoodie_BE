@@ -1,9 +1,10 @@
-package com.unifoodie.unifoodie.dto;
+package com.unifoodie.dto;
 
 import lombok.Data;
 
 @Data
-public class LoginRequest {
+public class RegisterRequest {
     private String username;
+    private String email;
     private String password;
 }

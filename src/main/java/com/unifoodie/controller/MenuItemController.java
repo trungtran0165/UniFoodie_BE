@@ -21,12 +21,12 @@ public class MenuItemController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem menuItem) {
+    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable String id, @RequestBody MenuItem menuItem) {
         return ResponseEntity.ok(menuItemService.updateMenuItem(id, menuItem));
     }
 
     @PatchMapping("/{id}/available")
-    public ResponseEntity<MenuItem> toggleAvailable(@PathVariable Long id) {
+    public ResponseEntity<MenuItem> toggleAvailable(@PathVariable String id) {
         return ResponseEntity.ok(menuItemService.toggleAvailable(id));
     }
 
@@ -36,15 +36,15 @@ public class MenuItemController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MenuItem> getMenuItemById(@PathVariable Long id) {
+    public ResponseEntity<MenuItem> getMenuItemById(@PathVariable String id) {
         return menuItemService.getMenuItemById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMenuItem(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMenuItem(@PathVariable String id) {
         menuItemService.deleteMenuItem(id);
         return ResponseEntity.ok().build();
     }
-} 
+}

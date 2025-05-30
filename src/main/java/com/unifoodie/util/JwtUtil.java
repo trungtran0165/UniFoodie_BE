@@ -1,4 +1,4 @@
-package com.unifoodie.unifoodie.util;
+package com.unifoodie.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

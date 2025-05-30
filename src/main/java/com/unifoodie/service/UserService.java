@@ -1,7 +1,7 @@
-package com.unifoodie.unifoodie.service;
+package com.unifoodie.service;
 
-import com.unifoodie.unifoodie.model.User;
-import com.unifoodie.unifoodie.repository.UserRepository;
+import com.unifoodie.model.User;
+import com.unifoodie.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,5 +30,9 @@ public class UserService implements UserDetailsService {
 
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    public long countUsers() {
+        return userRepository.count();
     }
 }

@@ -1,4 +1,4 @@
-package com.unifoodie.unifoodie.dto;
+package com.unifoodie.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,5 +8,4 @@ import lombok.Data;
 public class LoginResponse {
     private String token;
     private String username;
-    private String name;
 }

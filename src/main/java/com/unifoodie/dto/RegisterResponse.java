@@ -1,4 +1,4 @@
-package com.unifoodie.unifoodie.dto;
+package com.unifoodie.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

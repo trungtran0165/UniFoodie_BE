@@ -1,4 +1,5 @@
-package com.unifoodie.unifoodie;
+package com.unifoodie.controller;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

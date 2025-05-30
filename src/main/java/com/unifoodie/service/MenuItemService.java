@@ -18,7 +18,7 @@ public class MenuItemService {
         return menuItemRepository.findAll();
     }
 
-    public Optional<MenuItem> getMenuItemById(Long id) {
+    public Optional<MenuItem> getMenuItemById(String id) {
         return menuItemRepository.findById(id);
     }
 
@@ -28,7 +28,7 @@ public class MenuItemService {
     }
 
     @Transactional
-    public MenuItem updateMenuItem(Long id, MenuItem menuItemDetails) {
+    public MenuItem updateMenuItem(String id, MenuItem menuItemDetails) {
         MenuItem menuItem = menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
         menuItem.setName(menuItemDetails.getName());
@@ -40,7 +40,7 @@ public class MenuItemService {
     }
 
     @Transactional
-    public MenuItem toggleAvailable(Long id) {
+    public MenuItem toggleAvailable(String id) {
         MenuItem menuItem = menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
         menuItem.setAvailable(!menuItem.isAvailable());
@@ -48,9 +48,13 @@ public class MenuItemService {
     }
 
     @Transactional
-    public void deleteMenuItem(Long id) {
+    public void deleteMenuItem(String id) {
         MenuItem menuItem = menuItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("MenuItem not found with id: " + id));
         menuItemRepository.delete(menuItem);
     }
-} 
+
+    public long countMenuItems() {
+        return menuItemRepository.count();
+    }
+}

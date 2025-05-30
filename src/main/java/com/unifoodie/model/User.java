@@ -1,4 +1,4 @@
-package com.unifoodie.unifoodie.model;
+package com.unifoodie.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,8 +22,6 @@ public class User implements UserDetails {
 
     @Id
     private String id;
-
-    private String name;
 
     @Indexed(unique = true)
     private String username;

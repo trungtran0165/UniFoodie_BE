@@ -1,7 +1,7 @@
-package com.unifoodie.unifoodie.filter;
+package com.unifoodie.filter;
 
-import com.unifoodie.unifoodie.service.UserService;
-import com.unifoodie.unifoodie.util.JwtUtil;
+import com.unifoodie.service.UserService;
+import com.unifoodie.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -1,10 +1,10 @@
-package com.unifoodie.unifoodie.controller;
+package com.unifoodie.controller;
 
-import com.unifoodie.unifoodie.dto.LoginRequest;
-import com.unifoodie.unifoodie.dto.LoginResponse;
-import com.unifoodie.unifoodie.dto.RegisterRequest;
-import com.unifoodie.unifoodie.dto.RegisterResponse;
-import com.unifoodie.unifoodie.service.AuthService;
+import com.unifoodie.dto.LoginRequest;
+import com.unifoodie.dto.LoginResponse;
+import com.unifoodie.dto.RegisterRequest;
+import com.unifoodie.dto.RegisterResponse;
+import com.unifoodie.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

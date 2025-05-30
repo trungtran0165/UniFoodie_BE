@@ -1,11 +1,11 @@
-package com.unifoodie.unifoodie.service;
+package com.unifoodie.service;
 
-import com.unifoodie.unifoodie.dto.LoginRequest;
-import com.unifoodie.unifoodie.dto.LoginResponse;
-import com.unifoodie.unifoodie.dto.RegisterRequest;
-import com.unifoodie.unifoodie.dto.RegisterResponse;
-import com.unifoodie.unifoodie.model.User;
-import com.unifoodie.unifoodie.util.JwtUtil;
+import com.unifoodie.dto.LoginRequest;
+import com.unifoodie.dto.LoginResponse;
+import com.unifoodie.dto.RegisterRequest;
+import com.unifoodie.dto.RegisterResponse;
+import com.unifoodie.model.User;
+import com.unifoodie.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,7 +43,6 @@ public class AuthService {
 
         // Create new user
         User user = new User();
-        user.setName(registerRequest.getName());
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
@@ -64,7 +63,7 @@ public class AuthService {
             User user = (User) authentication.getPrincipal();
             String jwt = jwtUtil.generateToken(user);
 
-            return new LoginResponse(jwt, user.getUsername(), user.getName());
+            return new LoginResponse(jwt, user.getUsername());
         } catch (AuthenticationException e) {
             throw new RuntimeException("Invalid username/password supplied", e);
         }

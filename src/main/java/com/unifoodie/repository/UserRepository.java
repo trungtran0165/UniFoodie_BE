@@ -1,6 +1,6 @@
-package com.unifoodie.unifoodie.repository;
+package com.unifoodie.repository;
 
-import com.unifoodie.unifoodie.model.User;
+import com.unifoodie.model.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
