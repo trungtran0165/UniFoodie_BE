@@ -12,6 +12,4 @@ public interface FoodRepository extends MongoRepository<Food, String> {
            "{'description': {$regex: ?0, $options: 'i'}}, " +
            "{'ingredients': {$regex: ?0, $options: 'i'}}]}")
     List<Food> searchByKeyword(String keyword);
-    
-    List<String> findDistinctCategory();
 } 

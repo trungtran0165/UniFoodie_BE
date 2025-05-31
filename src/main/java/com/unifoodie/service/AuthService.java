@@ -5,6 +5,7 @@ import com.unifoodie.dto.LoginResponse;
 import com.unifoodie.dto.RegisterRequest;
 import com.unifoodie.dto.RegisterResponse;
 import com.unifoodie.model.User;
+import com.unifoodie.repository.UserRepository;
 import com.unifoodie.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,13 +15,16 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
+import java.util.Optional;
 
 @Service
 public class AuthService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -32,23 +36,21 @@ public class AuthService {
     private PasswordEncoder passwordEncoder;
 
     public RegisterResponse register(RegisterRequest registerRequest) {
-        // Check if username or email already exists
         if (userService.existsByUsername(registerRequest.getUsername())) {
             return new RegisterResponse("Username is already taken!", false);
         }
 
         if (userService.existsByEmail(registerRequest.getEmail())) {
-            return new RegisterResponse("Email is already in use!", false);
+             return new RegisterResponse("Email is already in use! Bạn có muốn đăng nhập không?", false);
         }
 
-        // Create new user
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRoles(Collections.singletonList("USER"));
+        user.setRole("khách hàng");
 
-        userService.save(user);
+        userRepository.save(user);
 
         return new RegisterResponse("User registered successfully!", true);
     }
@@ -61,11 +63,19 @@ public class AuthService {
                             loginRequest.getPassword()));
 
             User user = (User) authentication.getPrincipal();
+
             String jwt = jwtUtil.generateToken(user);
 
-            return new LoginResponse(jwt, user.getUsername());
+             LoginResponse loginResponse = new LoginResponse();
+             loginResponse.setToken(jwt);
+             loginResponse.setUsername(user.getUsername());
+
+             return loginResponse;
+
         } catch (AuthenticationException e) {
             throw new RuntimeException("Invalid username/password supplied", e);
+        } catch (RuntimeException e) {
+             throw e;
         }
     }
 }

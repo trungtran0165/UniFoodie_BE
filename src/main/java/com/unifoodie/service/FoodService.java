@@ -2,30 +2,21 @@ package com.unifoodie.service;
 
 import com.unifoodie.model.Food;
 import com.unifoodie.repository.FoodRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Optional;
 
-@Service
-public class FoodService {
-    
-    @Autowired
-    private FoodRepository foodRepository;
-    
-    public List<String> getAllCategories() {
-        return foodRepository.findDistinctCategory();
-    }
-    
-    public List<Food> searchFoods(String keyword) {
-        return foodRepository.searchByKeyword(keyword);
-    }
-    
-    public Food getFoodById(String id) {
-        return foodRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
-    }
-    
-    public List<Food> getFoodsByCategory(String category) {
-        return foodRepository.findByCategory(category);
-    }
+public interface FoodService {
+    List<Food> getAllFoods();
+    Optional<Food> getFoodById(String id);
+    List<Food> getFoodsByCategory(String category);
+    Food createFood(Food food);
+    Food updateFood(String id, Food foodDetails);
+    void deleteFood(String id);
+    Food toggleAvailable(String id);
+    Food patchFood(String id, Food foodDetails);
+    List<String> getAllCategories();
+    List<Food> searchFoods(String keyword);
+    // Add other methods for creating, updating, deleting food items if needed
 } 

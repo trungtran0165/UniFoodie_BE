@@ -21,12 +21,12 @@ public class PromotionController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Promotion> updatePromotion(@PathVariable Long id, @RequestBody Promotion promotion) {
+    public ResponseEntity<Promotion> updatePromotion(@PathVariable String id, @RequestBody Promotion promotion) {
         return ResponseEntity.ok(promotionService.updatePromotion(id, promotion));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePromotion(@PathVariable Long id) {
+    public ResponseEntity<Void> deletePromotion(@PathVariable String id) {
         promotionService.deletePromotion(id);
         return ResponseEntity.ok().build();
     }
@@ -37,9 +37,15 @@ public class PromotionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Promotion> getPromotionById(@PathVariable Long id) {
+    public ResponseEntity<Promotion> getPromotionById(@PathVariable String id) {
         return promotionService.getPromotionById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Promotion> patchPromotion(@PathVariable String id, @RequestBody Promotion promotion) {
+        Promotion updated = promotionService.patchPromotion(id, promotion);
+        return ResponseEntity.ok(updated);
     }
 } 
