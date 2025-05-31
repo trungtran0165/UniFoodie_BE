@@ -56,17 +56,13 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/test/**").permitAll()
-                        .requestMatchers("/hello").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/menu-items/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/promotions/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated())
+                        .anyRequest().permitAll()) // Tắt hết security để test
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        // Comment out JWT filter để test
+        // http.addFilterBefore(jwtRequestFilter,
+        // UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
