@@ -31,12 +31,11 @@ public class PromotionService {
     public Promotion updatePromotion(String id, Promotion promotionDetails) {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Promotion not found with id: " + id));
-        promotion.setTitle(promotionDetails.getTitle());
-        promotion.setDiscount(promotionDetails.getDiscount());
+        promotion.setName(promotionDetails.getName());
+        promotion.setValue(promotionDetails.getValue());
         promotion.setStartDate(promotionDetails.getStartDate());
         promotion.setEndDate(promotionDetails.getEndDate());
         promotion.setActive(promotionDetails.isActive());
-        promotion.setCreatedBy(promotionDetails.getCreatedBy());
         return promotionRepository.save(promotion);
     }
 
@@ -45,5 +44,17 @@ public class PromotionService {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Promotion not found with id: " + id));
         promotionRepository.delete(promotion);
+    }
+
+    @Transactional
+    public Promotion patchPromotion(String id, Promotion promotionDetails) {
+        Promotion promotion = promotionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Promotion not found with id: " + id));
+        if (promotionDetails.getName() != null) promotion.setName(promotionDetails.getName());
+        if (promotionDetails.getValue() != 0) promotion.setValue(promotionDetails.getValue());
+        if (promotionDetails.getStartDate() != null) promotion.setStartDate(promotionDetails.getStartDate());
+        if (promotionDetails.getEndDate() != null) promotion.setEndDate(promotionDetails.getEndDate());
+        promotion.setActive(promotionDetails.isActive());
+        return promotionRepository.save(promotion);
     }
 } 

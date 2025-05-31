@@ -1,45 +1,54 @@
-// package com.unifoodie.controller;
 
-// import com.unifoodie.model.Promotion;
-// import com.unifoodie.service.PromotionService;
-// import org.springframework.beans.factory.annotation.Autowired;
-// import org.springframework.http.ResponseEntity;
-// import org.springframework.web.bind.annotation.*;
+package com.unifoodie.controller;
 
-// import java.util.List;
+import com.unifoodie.model.Promotion;
+import com.unifoodie.service.PromotionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-// @RestController
-// @RequestMapping("/api/promotions")
-// @CrossOrigin(origins = "*")
-// public class PromotionController {
-//     @Autowired
-//     private PromotionService promotionService;
+import java.util.List;
 
-//     @PostMapping
-//     public ResponseEntity<Promotion> createPromotion(@RequestBody Promotion promotion) {
-//         return ResponseEntity.ok(promotionService.createPromotion(promotion));
-//     }
+@RestController
+@RequestMapping("/api/promotions")
+@CrossOrigin(origins = "*")
+public class PromotionController {
+    @Autowired
+    private PromotionService promotionService;
 
-//     @PutMapping("/{id}")
-//     public ResponseEntity<Promotion> updatePromotion(@PathVariable Long id, @RequestBody Promotion promotion) {
-//         return ResponseEntity.ok(promotionService.updatePromotion(id, promotion));
-//     }
+    @PostMapping
+    public ResponseEntity<Promotion> createPromotion(@RequestBody Promotion promotion) {
+        return ResponseEntity.ok(promotionService.createPromotion(promotion));
+    }
 
-//     @DeleteMapping("/{id}")
-//     public ResponseEntity<Void> deletePromotion(@PathVariable Long id) {
-//         promotionService.deletePromotion(id);
-//         return ResponseEntity.ok().build();
-//     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Promotion> updatePromotion(@PathVariable String id, @RequestBody Promotion promotion) {
+        return ResponseEntity.ok(promotionService.updatePromotion(id, promotion));
+    }
 
-//     @GetMapping
-//     public ResponseEntity<List<Promotion>> getAllPromotions() {
-//         return ResponseEntity.ok(promotionService.getAllPromotions());
-//     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePromotion(@PathVariable String id) {
+        promotionService.deletePromotion(id);
+        return ResponseEntity.ok().build();
+    }
 
-//     @GetMapping("/{id}")
-//     public ResponseEntity<Promotion> getPromotionById(@PathVariable Long id) {
-//         return promotionService.getPromotionById(id)
-//                 .map(ResponseEntity::ok)
-//                 .orElse(ResponseEntity.notFound().build());
-//     }
-// } 
+    @GetMapping
+    public ResponseEntity<List<Promotion>> getAllPromotions() {
+        return ResponseEntity.ok(promotionService.getAllPromotions());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Promotion> getPromotionById(@PathVariable String id) {
+        return promotionService.getPromotionById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Promotion> patchPromotion(@PathVariable String id, @RequestBody Promotion promotion) {
+        Promotion updated = promotionService.patchPromotion(id, promotion);
+        return ResponseEntity.ok(updated);
+    }
+} 
+
+
