@@ -96,28 +96,30 @@ public class PaymentController {
                 if (orderCode != null) {
                     paymentService.handlePaymentSuccess(orderCode, "demo-transaction-" + System.currentTimeMillis());
                 }
-                return new RedirectView("http://localhost:5173/payment-success?orderCode=" + orderCode);
+                return new RedirectView(
+                        "http://localhost:5173/payment-success?orderCode=" + orderCode + "&status=success");
             } else if ("true".equals(cancel)) {
                 // Payment cancelled
                 if (orderCode != null) {
                     paymentService.handlePaymentCancel(orderCode);
                 }
                 return new RedirectView(
-                        "http://localhost:5173/payment-success?orderCode=" + orderCode + "&status=cancelled");
+                        "http://localhost:5173/payment-result?orderCode=" + orderCode + "&status=cancelled");
             } else if ("success".equals(status) || "PAID".equals(status)) {
                 // Payment successful
                 if (orderCode != null) {
                     paymentService.handlePaymentSuccess(orderCode,
                             id != null ? id : "success-" + System.currentTimeMillis());
                 }
-                return new RedirectView("http://localhost:5173/payment-success?orderCode=" + orderCode);
+                return new RedirectView(
+                        "http://localhost:5173/payment-success?orderCode=" + orderCode + "&status=success");
             } else {
                 // Payment failed or other status
                 if (orderCode != null) {
                     paymentService.handlePaymentFailed(orderCode, status);
                 }
                 return new RedirectView(
-                        "http://localhost:5173/payment-success?orderCode=" + orderCode + "&status=failed");
+                        "http://localhost:5173/payment-result?orderCode=" + orderCode + "&status=failed");
             }
         } catch (Exception e) {
             System.err.println("Payment return handler error: " + e.getMessage());
@@ -135,10 +137,10 @@ public class PaymentController {
 
             paymentService.handlePaymentCancel(orderCode);
             return new RedirectView(
-                    "http://localhost:5173/payment-success?orderCode=" + orderCode + "&status=cancelled");
+                    "http://localhost:5173/payment-result?orderCode=" + orderCode + "&status=cancelled");
         } catch (Exception e) {
             System.err.println("Payment cancel handler error: " + e.getMessage());
-            return new RedirectView("http://localhost:5173/payment-success?error=true");
+            return new RedirectView("http://localhost:5173/payment-result?error=true&status=error");
         }
     }
 
