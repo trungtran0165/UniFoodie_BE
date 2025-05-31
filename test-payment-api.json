@@ -1,0 +1,47 @@
+{
+  "info": {
+    "name": "UniFoodie Payment API Tests",
+    "description": "Test collection for PayOS payment integration"
+  },
+  "tests": [
+    {
+      "name": "Create Payment",
+      "method": "POST",
+      "url": "http://localhost:8080/api/payments/create",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "orderId": "ORDER_123",
+        "amount": 50000,
+        "description": "Thanh toán đơn hàng UniFoodie",
+        "customerName": "Nguyễn Văn A",
+        "customerEmail": "customer@example.com",
+        "customerPhone": "0123456789",
+        "items": [
+          {
+            "name": "Phở Bò",
+            "quantity": 1,
+            "price": 50000
+          }
+        ]
+      }
+    },
+    {
+      "name": "Get Payment Status",
+      "method": "GET",
+      "url": "http://localhost:8080/api/payments/status/{{orderCode}}",
+      "description": "Replace {{orderCode}} with actual order code from create payment response"
+    },
+    {
+      "name": "Get Payment by Order ID",
+      "method": "GET",
+      "url": "http://localhost:8080/api/payments/order/ORDER_123"
+    },
+    {
+      "name": "Get Pending Payments",
+      "method": "GET",
+      "url": "http://localhost:8080/api/payments/status?status=PENDING"
+    }
+  ]
+} 
