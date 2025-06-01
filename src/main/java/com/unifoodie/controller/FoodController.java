@@ -56,34 +56,14 @@ public class FoodController {
         return new ResponseEntity<>(foods, HttpStatus.OK);
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createFood(
-            @RequestParam("name") String name,
-            @RequestParam("description") String description,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("price") double price,
-            @RequestParam("category") String category)
-             {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createFood(@RequestBody Food food) {
         try {
-            // Upload image to Cloudinary
-            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
-            String imageUrl = (String) uploadResult.get("secure_url");
-
-            // Create Food object
-            Food food = new Food();
-            food.setName(name);
-            food.setDescription(description);
-            food.setImage(imageUrl); // Store Cloudinary URL
-            food.setPrice((int) price);
-            food.setCategory(category);
-            food.setIngredients(null); // Assuming ingredients are not part of this form
-            food.setAvailable(true); // Assuming new food is available
+            // The image is expected to be a Base64 string in the Food object's image field
+            // The service layer should handle decoding and saving the image
 
             Food createdFood = foodService.createFood(food);
             return ResponseEntity.ok(createdFood);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload image or create food item.");
         } catch (Exception e) {
              e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create food item: " + e.getMessage());
