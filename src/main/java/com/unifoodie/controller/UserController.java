@@ -6,12 +6,21 @@ import com.unifoodie.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+import org.springframework.http.HttpStatus;
+import com.cloudinary.utils.ObjectUtils;
+import com.cloudinary.Cloudinary;
 
 @RestController
 @RequestMapping("/api/users")
@@ -25,6 +34,9 @@ public class UserController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
@@ -130,6 +142,35 @@ public class UserController {
             System.err.println("Error removing from favorites: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/{userId}/profile-picture")
+    public ResponseEntity<?> uploadProfilePicture(
+            @PathVariable String userId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            User user = userService.getUserById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+            // Upload to Cloudinary
+            Map<String, Object> uploadResult = cloudinary.uploader().upload(file.getBytes(), 
+                ObjectUtils.asMap("folder", "profile_pictures"));
+
+            // Get the secure URL from the upload result
+            String imageUrl = (String) uploadResult.get("secure_url");
+
+            // Update user's profile picture URL
+            user.setProfilePicture(imageUrl);
+            userService.save(user);
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Profile picture uploaded successfully",
+                "imageUrl", imageUrl
+            ));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Failed to upload profile picture: " + e.getMessage());
         }
     }
 } 

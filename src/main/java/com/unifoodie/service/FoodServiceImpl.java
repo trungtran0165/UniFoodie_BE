@@ -39,7 +39,16 @@ public class FoodServiceImpl implements FoodService {
     
     @Override
     public Optional<Food> getFoodById(String id) {
-        return foodRepository.findById(id);
+        try {
+            int foodId = Integer.parseInt(id);
+            return foodRepository.findById(foodId);
+        } catch (NumberFormatException e) {
+            // Handle cases where the ID is not a valid integer (e.g., a MongoDB ObjectId string)
+            // Depending on your application logic, you might log an error, return Optional.empty(), or throw a custom exception.
+            // For now, we'll log and return empty.
+            System.err.println("Invalid food ID format: " + id);
+            return Optional.empty();
+        }
     }
     
     @Override

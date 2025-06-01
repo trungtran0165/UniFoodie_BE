@@ -20,6 +20,7 @@ public class User implements UserDetails {
     private String phoneNumber;
     private String role;
     private String createdAt;
+    private String profilePicture;
     private List<String> favourites = new ArrayList<>();
 
     public User() {}
@@ -33,6 +34,7 @@ public class User implements UserDetails {
         this.role = role;
         this.createdAt = createdAt;
         this.favourites = new ArrayList<>();
+        this.profilePicture = "https://cdn-icons-png.flaticon.com/512/706/706830.png"; // Default avatar
     }
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -54,6 +56,8 @@ public class User implements UserDetails {
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
     public List<String> getFavourites() { return favourites; }
     public void setFavourites(List<String> favourites) { this.favourites = favourites; }
+    public String getProfilePicture() { return profilePicture; }
+    public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
