@@ -1,4 +1,3 @@
-
 package com.unifoodie.controller;
 
 import com.unifoodie.model.Promotion;
@@ -50,5 +49,3 @@ public class PromotionController {
         return ResponseEntity.ok(updated);
     }
 } 
-
-
