@@ -34,6 +34,9 @@ public class PaymentService {
     @Autowired
     private PayOSConfig payOSConfig;
 
+    @Autowired
+    private OrderService orderService;
+
     @Value("${payos.return-url}")
     private String returnUrl;
 
@@ -48,9 +51,22 @@ public class PaymentService {
             String orderCode = generateOrderCode();
             long orderCodeLong = Long.parseLong(orderCode);
 
-            // Create payment record
+            // ✅ FIX: Ensure description meets PayOS 25 char limit
+            String originalDescription = request.getDescription();
+            String payosDescription = originalDescription;
+
+            if (originalDescription != null && originalDescription.length() > 25) {
+                // Truncate to 25 chars if too long
+                payosDescription = originalDescription.substring(0, 22) + "...";
+                System.out.println("⚠️  Description truncated for PayOS:");
+                System.out.println(
+                        "   Original: " + originalDescription + " (" + originalDescription.length() + " chars)");
+                System.out.println("   PayOS: " + payosDescription + " (" + payosDescription.length() + " chars)");
+            }
+
+            // Create payment record with original description
             Payment payment = new Payment(orderCode, request.getOrderId(), request.getAmount(),
-                    request.getDescription());
+                    originalDescription); // Store full description in database
             payment.setCustomerName(request.getCustomerName());
             payment.setCustomerEmail(request.getCustomerEmail());
             payment.setCustomerPhone(request.getCustomerPhone());
@@ -58,11 +74,11 @@ public class PaymentService {
             // Convert items to PayOS format
             List<PayOSRequest.PayOSItem> payOSItems = convertToPayOSItems(request.getItems(), request.getAmount());
 
-            // Create PayOS request with proper structure
+            // Create PayOS request with SHORT description
             PayOSRequest payOSRequest = new PayOSRequest(
                     orderCodeLong,
                     request.getAmount(),
-                    request.getDescription(),
+                    payosDescription, // ✅ Use short description for PayOS
                     returnUrl + "?orderCode=" + orderCode,
                     cancelUrl + "?orderCode=" + orderCode,
                     payOSItems);
@@ -82,24 +98,51 @@ public class PaymentService {
             String signature = createPayOSSignature(payOSRequest);
             payOSRequest.setSignature(signature);
 
-            // Call PayOS API
+            // ✅ TRY PAYOS FIRST (Production Payment)
+            System.out.println("🚀 Attempting PayOS real payment for order: " + orderCode);
+            System.out.println("   PayOS Config Check:");
+            System.out.println("   - Client ID: "
+                    + (payOSConfig.getClientId() != null ? payOSConfig.getClientId().substring(0, 8) + "..." : "NULL"));
+            System.out.println("   - API Key: " + (payOSConfig.getApiKey() != null ? "***SET***" : "NULL"));
+            System.out.println("   - Checksum Key: " + (payOSConfig.getChecksumKey() != null ? "***SET***" : "NULL"));
+            System.out.println("   - Description: " + payosDescription + " (" + payosDescription.length() + " chars)");
+
             String paymentUrl = callPayOSCreatePayment(payOSRequest);
 
             if (paymentUrl != null && !paymentUrl.isEmpty()) {
+                // ✅ PayOS SUCCESS - Real payment URL
                 payment.setPaymentUrl(paymentUrl);
+                payment.setStatus("PENDING");
                 paymentRepository.save(payment);
+
+                System.out.println("✅ PayOS real payment created successfully!");
+                System.out.println("   Order Code: " + orderCode);
+                System.out.println("   Payment URL: " + paymentUrl);
+                System.out.println("   Amount: " + request.getAmount() + " VND");
+
                 return PaymentResponse.success(orderCode, paymentUrl, "payos-checkout");
             } else {
-                // Fallback to demo payment page
-                String demoPaymentUrl = "http://localhost:5173/demo-payment?orderCode=" + orderCode + "&amount="
-                        + request.getAmount();
-                payment.setPaymentUrl(demoPaymentUrl);
+                // ❌ PayOS FAILED - Provide smart fallback
+                System.err.println("❌ PayOS payment creation failed - using smart fallback");
+
+                // Option 1: For development/testing - provide QR payment URL
+                String qrPaymentUrl = "http://localhost:5173/qr-payment?orderCode=" + orderCode +
+                        "&amount=" + request.getAmount() +
+                        "&orderId=" + request.getOrderId();
+
+                payment.setPaymentUrl(qrPaymentUrl);
+                payment.setStatus("PENDING");
                 paymentRepository.save(payment);
-                return PaymentResponse.success(orderCode, demoPaymentUrl, "demo-payment");
+
+                System.out.println("🔄 Fallback: Using QR payment method");
+                System.out.println("   Order Code: " + orderCode);
+                System.out.println("   QR Payment URL: " + qrPaymentUrl);
+
+                return PaymentResponse.success(orderCode, qrPaymentUrl, "qr-payment");
             }
 
         } catch (Exception e) {
-            System.err.println("Payment creation error: " + e.getMessage());
+            System.err.println("❌ Payment creation error: " + e.getMessage());
             e.printStackTrace();
             return PaymentResponse.error("Failed to create payment: " + e.getMessage());
         }
@@ -203,8 +246,30 @@ public class PaymentService {
             payment.setTransactionId(transactionId);
             paymentRepository.save(payment);
 
-            // TODO: Update order status in your order management system
-            // orderService.updateOrderStatus(payment.getOrderId(), "PAID");
+            // Update order status and save order history for AI recommendation
+            try {
+                String orderId = payment.getOrderId();
+                System.out.println("Processing payment success for orderCode: " + orderCode + ", orderId: " + orderId);
+
+                // Update order payment status to COMPLETED
+                orderService.updatePaymentStatus(orderId, "COMPLETED");
+
+                // Update order status to CONFIRMED (paid orders are confirmed)
+                orderService.updateOrderStatus(orderId, "CONFIRMED");
+
+                System.out.println("✅ Order history saved successfully for orderId: " + orderId);
+                System.out.println("   - Order payment status updated to: COMPLETED");
+                System.out.println("   - Order status updated to: CONFIRMED");
+                System.out.println("   - Order is now available for AI recommendation system");
+
+            } catch (Exception e) {
+                System.err.println("❌ Failed to update order status after payment success: " + e.getMessage());
+                System.err.println("   OrderCode: " + orderCode);
+                System.err.println("   OrderId: " + payment.getOrderId());
+                e.printStackTrace();
+            }
+        } else {
+            System.err.println("❌ Payment not found for orderCode: " + orderCode);
         }
     }
 

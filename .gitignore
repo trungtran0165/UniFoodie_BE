@@ -31,3 +31,43 @@ build/
 
 ### VS Code ###
 .vscode/
+
+ai_recommendation/venv/
+ai_recommendation/__pycache__/
+### AI Recommendation Service (Python) ###
+ai_recommendation/*.pyc
+ai_recommendation/**/*.pyc
+ai_recommendation/.env
+ai_recommendation/.env.local
+ai_recommendation/.env.production
+ai_recommendation/.env.staging
+ai_recommendation/*.log
+ai_recommendation/logs/
+ai_recommendation/.pytest_cache/
+ai_recommendation/dist/
+ai_recommendation/build/
+ai_recommendation/*.egg-info/
+ai_recommendation/.coverage
+ai_recommendation/htmlcov/
+ai_recommendation/.tox/
+ai_recommendation/.cache
+ai_recommendation/nosetests.xml
+ai_recommendation/coverage.xml
+ai_recommendation/*.cover
+ai_recommendation/.hypothesis/
+
+### OS Generated Files ###
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+### Temporary Files ###
+*.tmp
+*.temp
+*.swp
+*.swo
+*~

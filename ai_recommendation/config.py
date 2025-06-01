@@ -1,8 +1,8 @@
 from pymongo import MongoClient
 from datetime import datetime
 
-# Database configuration
-MONGO_URI = "mongodb://localhost:27017/"
+# Database configuration - MongoDB Atlas
+MONGO_URI = "mongodb+srv://trungtran0168372:TrunG159@labubuuit.clyjb.mongodb.net/unifoodie?retryWrites=true&w=majority&appName=LabubuUIT"
 DB_NAME = "unifoodie"
 
 # Initialize MongoDB client
