@@ -3,6 +3,8 @@ package com.unifoodie.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
+
 @Document(collection = "foods")
 public class Food {
     @Id
@@ -12,7 +14,7 @@ public class Food {
     private String description;
     private String image;
     private int price;
-    private String ingredients;
+    private List<String> ingredients;
     private String category;
     private boolean available = true;
 
@@ -34,8 +36,8 @@ public class Food {
     public int getPrice() { return price; }
     public void setPrice(int price) { this.price = price; }
 
-    public String getIngredients() { return ingredients; }
-    public void setIngredients(String ingredients) { this.ingredients = ingredients; }
+    public List<String> getIngredients() { return ingredients; }
+    public void setIngredients(List<String> ingredients) { this.ingredients = ingredients; }
 
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
