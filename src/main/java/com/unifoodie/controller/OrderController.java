@@ -65,12 +65,47 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<List<Order>> getAllOrders() {
         List<Order> orders = orderService.getAllOrders();
+
+        System.out.println("📦 OrderController - getAllOrders called, found " + orders.size() + " total orders");
+
+        if (!orders.isEmpty()) {
+            System.out.println("📦 Orders in database:");
+            for (int i = 0; i < Math.min(orders.size(), 10); i++) {
+                Order order = orders.get(i);
+                System.out.println("   Order " + (i + 1) + ": ID=" + order.getId() +
+                        ", UserID=" + order.getUserId() +
+                        ", Status=" + order.getStatus() +
+                        ", CreatedAt=" + order.getCreatedAt());
+            }
+            if (orders.size() > 10) {
+                System.out.println("   ... and " + (orders.size() - 10) + " more orders");
+            }
+        }
+
         return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Order>> getOrdersByUserId(@PathVariable String userId) {
+        System.out.println("📞 OrderController - Getting orders for userId: " + userId);
+
         List<Order> orders = orderService.getOrdersByUserId(userId);
+
+        System.out.println("📦 OrderController - Found " + orders.size() + " orders for user: " + userId);
+
+        if (orders.isEmpty()) {
+            System.out.println("⚠️ OrderController - No orders found for user: " + userId);
+        } else {
+            System.out.println("✅ OrderController - Orders summary:");
+            for (int i = 0; i < orders.size(); i++) {
+                Order order = orders.get(i);
+                System.out.println("   Order " + (i + 1) + ": ID=" + order.getId() +
+                        ", Status=" + order.getStatus() +
+                        ", Items=" + order.getItems().size() +
+                        ", Total=" + order.getTotalAmount() + "đ");
+            }
+        }
+
         return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 

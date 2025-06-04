@@ -17,7 +17,8 @@ public class CartItem {
     private String name;
     private double price;
     private int quantity;
-    private String imageUrl; // Optional: store image URL for display in cart
+    private String imageUrl; // Optional: store image URL for display in cart (legacy)
+    private String image; // New field to match Food model
 
     // Manual Constructors (if not using Lombok)
     public CartItem() {
@@ -29,6 +30,7 @@ public class CartItem {
         this.price = price;
         this.quantity = quantity;
         this.imageUrl = imageUrl;
+        this.image = imageUrl; // Set both for compatibility
     }
 
     // Manual Getters and Setters (if not using Lombok)
@@ -70,5 +72,15 @@ public class CartItem {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+        this.image = imageUrl; // Keep both in sync
     }
-} 
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+        this.imageUrl = image; // Keep both in sync
+    }
+}

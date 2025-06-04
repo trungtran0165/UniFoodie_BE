@@ -5,11 +5,16 @@ from sklearn.metrics.pairwise import cosine_similarity
 from config import foods_collection, users_collection, orders_collection
 
 def load_data_from_db():
-    # Load all foods from database
+    # Load all foods from database - now include _id as the main identifier
     foods = list(foods_collection.find({}, {
-        'id': 1, 'name': 1, 'description': 1, 'image': 1, 
-        'price': 1, 'ingredients': 1, 'category': 1, '_id': 0
+        '_id': 1, 'id': 1, 'name': 1, 'description': 1, 'image': 1, 
+        'price': 1, 'ingredients': 1, 'category': 1
     }))
+    
+    # Convert ObjectId to string for pandas
+    for food in foods:
+        food['_id'] = str(food['_id'])
+        
     return pd.DataFrame(foods)
 
 # Load data từ database
@@ -52,12 +57,8 @@ def get_user_purchase_history(user_id):
             for item in items:
                 food_id = item.get('foodId')
                 if food_id:
-                    try:
-                        # Try to convert to int to match food IDs in CSV data
-                        food_ids.append(int(food_id))
-                    except (ValueError, TypeError):
-                        # If conversion fails, skip this item
-                        continue
+                    # Keep food_id as string (ObjectId format)
+                    food_ids.append(str(food_id))
         
         # Remove duplicates but keep order
         seen = set()
@@ -76,12 +77,22 @@ def get_user_purchase_history(user_id):
 
 def recommend_by_food(food_id, num_results=3):
     try:
-        # Lấy index của food
-        food_indices = df[df['id'] == food_id].index
+        # Convert food_id to string for comparison
+        food_id_str = str(food_id)
+        
+        # Lấy index của food - try both _id and id fields
+        food_indices = df[df['_id'] == food_id_str].index
+        if len(food_indices) == 0:
+            # Try with numeric id as fallback
+            try:
+                food_indices = df[df['id'] == int(food_id_str)].index
+            except (ValueError, TypeError):
+                pass
+                
         if len(food_indices) == 0:
             print(f"Food ID {food_id} not found in database")
             # Return random recommendations if food not found
-            return df.sample(n=num_results)[['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+            return df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
         
         idx = food_indices[0]
         
@@ -97,12 +108,21 @@ def recommend_by_food(food_id, num_results=3):
         # Lấy food indices
         food_indices = [i[0] for i in sim_scores]
         
-        # Trả về food details
-        return df.iloc[food_indices][['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        # Trả về food details với _id
+        result = df.iloc[food_indices][['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        
+        # Add food_id field for consistency with frontend
+        for item in result:
+            item['food_id'] = item['_id']
+            
+        return result
     except Exception as e:
         print(f"Error in recommend_by_food for food_id {food_id}: {e}")
         # Return random recommendations on error
-        return df.sample(n=num_results)[['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        result = df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        for item in result:
+            item['food_id'] = item['_id']
+        return result
 
 def recommend_by_ingredients(ingredients, num_results=3):
     # Tạo một food giả với ingredients được cung cấp
@@ -132,8 +152,14 @@ def recommend_by_ingredients(ingredients, num_results=3):
         # Nếu không có món nào chứa tất cả ingredients, lấy top N món có similarity cao nhất
         top_indices = similarity_scores.argsort()[-num_results:][::-1]
     
-    # Trả về food details
-    return df.iloc[top_indices][['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+    # Trả về food details với _id
+    result = df.iloc[top_indices][['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+    
+    # Add food_id field for consistency with frontend
+    for item in result:
+        item['food_id'] = item['_id']
+        
+    return result
 
 def recommend(user_id, num_results=3):
     try:
@@ -143,7 +169,10 @@ def recommend(user_id, num_results=3):
         if not user_foods:
             # Nếu user chưa có lịch sử mua hàng, trả về các món phổ biến
             print(f"No purchase history for user {user_id}, returning random recommendations")
-            return df.sample(n=num_results)[['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+            result = df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+            for item in result:
+                item['food_id'] = item['_id']
+            return result
         
         # Tính tổng similarity score cho mỗi food
         total_scores = np.zeros(len(df))
@@ -151,7 +180,14 @@ def recommend(user_id, num_results=3):
         
         for food_id in user_foods:
             try:
-                food_indices = df[df['id'] == food_id].index
+                # Try to find by _id first, then by numeric id
+                food_indices = df[df['_id'] == str(food_id)].index
+                if len(food_indices) == 0:
+                    try:
+                        food_indices = df[df['id'] == int(food_id)].index
+                    except (ValueError, TypeError):
+                        pass
+                        
                 if len(food_indices) > 0:
                     idx = food_indices[0]
                     total_scores += cosine_sim[idx]
@@ -164,18 +200,29 @@ def recommend(user_id, num_results=3):
         
         if valid_foods == 0:
             print(f"No valid foods found for user {user_id}, returning random recommendations")
-            return df.sample(n=num_results)[['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+            result = df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+            for item in result:
+                item['food_id'] = item['_id']
+            return result
         
         # Lấy top N items (loại bỏ các items user đã mua)
         top_indices = total_scores.argsort()[-num_results-len(user_foods):][::-1]
-        top_indices = [i for i in top_indices if df.iloc[i]['id'] not in user_foods][:num_results]
+        top_indices = [i for i in top_indices if df.iloc[i]['_id'] not in user_foods and str(df.iloc[i].get('id', '')) not in user_foods][:num_results]
         
         # Trả về food details
-        result = df.iloc[top_indices][['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        result = df.iloc[top_indices][['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        
+        # Add food_id field for consistency with frontend
+        for item in result:
+            item['food_id'] = item['_id']
+            
         print(f"Generated {len(result)} recommendations for user {user_id}")
         return result
         
     except Exception as e:
         print(f"Error in recommend for user {user_id}: {e}")
         # Return random recommendations on error
-        return df.sample(n=num_results)[['id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        result = df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
+        for item in result:
+            item['food_id'] = item['_id']
+        return result
