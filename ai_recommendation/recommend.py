@@ -19,8 +19,8 @@ df = load_data_from_db()
 df['ingredients'] = df['ingredients'].fillna('')
 df['category'] = df['category'].fillna('')
 
-# Kết hợp ingredients và category thành một text
-df['features'] = df['ingredients'] + ' ' + df['category']
+# Chuyển đổi ingredients list thành string và kết hợp với category
+df['features'] = df['ingredients'].apply(lambda x: ' '.join(x) if isinstance(x, list) else x) + ' ' + df['category']
 
 # Tạo TF-IDF vectorizer
 tfidf = TfidfVectorizer(stop_words='english')

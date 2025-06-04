@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import org.bson.types.ObjectId;
 
 @Service
 public class FoodServiceImpl implements FoodService {
@@ -40,12 +41,10 @@ public class FoodServiceImpl implements FoodService {
     @Override
     public Optional<Food> getFoodById(String id) {
         try {
-            int foodId = Integer.parseInt(id);
-            return foodRepository.findById(foodId);
-        } catch (NumberFormatException e) {
-            // Handle cases where the ID is not a valid integer (e.g., a MongoDB ObjectId string)
-            // Depending on your application logic, you might log an error, return Optional.empty(), or throw a custom exception.
-            // For now, we'll log and return empty.
+            // Use ObjectId to query by MongoDB's _id
+            return foodRepository.findById(id);
+        } catch (IllegalArgumentException e) {
+            // Handle cases where the ID string is not a valid ObjectId
             System.err.println("Invalid food ID format: " + id);
             return Optional.empty();
         }
@@ -59,6 +58,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     @Transactional
     public Food createFood(Food food) {
+        // MongoDB will auto-generate _id if not set
         return foodRepository.save(food);
     }
     
@@ -67,6 +67,7 @@ public class FoodServiceImpl implements FoodService {
     public Food updateFood(String id, Food foodDetails) {
         Food food = getFoodById(id)
                 .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
+        // Update fields - _id is not updated
         food.setName(foodDetails.getName());
         food.setDescription(foodDetails.getDescription());
         food.setImage(foodDetails.getImage());
@@ -88,6 +89,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     @Transactional
     public void deleteFood(String id) {
+        // Use the String id directly for deletion by _id
         foodRepository.deleteById(id);
     }
     
@@ -96,6 +98,7 @@ public class FoodServiceImpl implements FoodService {
     public Food patchFood(String id, Food foodDetails) {
         Food food = getFoodById(id)
                 .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
+        // Update fields - _id is not updated
         if (foodDetails.getName() != null) food.setName(foodDetails.getName());
         if (foodDetails.getDescription() != null) food.setDescription(foodDetails.getDescription());
         if (foodDetails.getImage() != null) food.setImage(foodDetails.getImage());
