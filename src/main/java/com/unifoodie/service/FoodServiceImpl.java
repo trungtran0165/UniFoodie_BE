@@ -11,57 +11,73 @@ import java.util.Optional;
 
 @Service
 public class FoodServiceImpl implements FoodService {
-    
+
     @Autowired
     private FoodRepository foodRepository;
     @Autowired
     private MongoTemplate mongoTemplate;
-    
+
     @Override
     public List<String> getAllCategories() {
         return mongoTemplate.findDistinct(
-            new org.springframework.data.mongodb.core.query.Query(),
-            "category",
-            "foods",
-            String.class
-        );
+                new org.springframework.data.mongodb.core.query.Query(),
+                "category",
+                "foods",
+                String.class);
     }
-    
+
     @Override
     public List<Food> searchFoods(String keyword) {
         return foodRepository.searchByKeyword(keyword);
     }
-    
+
     @Override
     public List<Food> getAllFoods() {
         return foodRepository.findAll();
     }
-    
+
     @Override
     public Optional<Food> getFoodById(String id) {
         try {
-            int foodId = Integer.parseInt(id);
-            return foodRepository.findById(foodId);
-        } catch (NumberFormatException e) {
-            // Handle cases where the ID is not a valid integer (e.g., a MongoDB ObjectId string)
-            // Depending on your application logic, you might log an error, return Optional.empty(), or throw a custom exception.
-            // For now, we'll log and return empty.
-            System.err.println("Invalid food ID format: " + id);
+            // Try to find by MongoDB ObjectId (_id) first
+            Optional<Food> foodByObjectId = foodRepository.findById(id);
+            if (foodByObjectId.isPresent()) {
+                System.out.println("Found food by ObjectId: " + id);
+                return foodByObjectId;
+            }
+
+            // Fallback: try to parse as integer and find by numeric id field
+            try {
+                int foodId = Integer.parseInt(id);
+                Optional<Food> foodByNumericId = foodRepository.findById(foodId);
+                if (foodByNumericId.isPresent()) {
+                    System.out.println("Found food by numeric id: " + foodId);
+                    return foodByNumericId;
+                }
+            } catch (NumberFormatException e2) {
+                // Not a valid integer, continue
+            }
+
+            System.out.println("Food not found with id: " + id);
+            return Optional.empty();
+
+        } catch (Exception e) {
+            System.err.println("Error finding food with id: " + id + ", error: " + e.getMessage());
             return Optional.empty();
         }
     }
-    
+
     @Override
     public List<Food> getFoodsByCategory(String category) {
         return foodRepository.findByCategory(category);
     }
-    
+
     @Override
     @Transactional
     public Food createFood(Food food) {
         return foodRepository.save(food);
     }
-    
+
     @Override
     @Transactional
     public Food updateFood(String id, Food foodDetails) {
@@ -75,7 +91,7 @@ public class FoodServiceImpl implements FoodService {
         food.setCategory(foodDetails.getCategory());
         return foodRepository.save(food);
     }
-    
+
     @Override
     @Transactional
     public Food toggleAvailable(String id) {
@@ -84,26 +100,46 @@ public class FoodServiceImpl implements FoodService {
         food.setAvailable(!food.isAvailable());
         return foodRepository.save(food);
     }
-    
+
     @Override
     @Transactional
     public void deleteFood(String id) {
-        foodRepository.deleteById(id);
+        try {
+            // Check if food exists first
+            Optional<Food> existingFood = getFoodById(id);
+            if (existingFood.isPresent()) {
+                // Delete by ObjectId (_id)
+                foodRepository.deleteById(id);
+                System.out.println("Successfully deleted food with ObjectId: " + id);
+            } else {
+                System.err.println("Cannot delete: Food not found with id: " + id);
+                throw new RuntimeException("Food not found with id: " + id);
+            }
+        } catch (Exception e) {
+            System.err.println("Error deleting food with id: " + id + ", error: " + e.getMessage());
+            throw new RuntimeException("Error deleting food with id: " + id, e);
+        }
     }
-    
+
     @Override
     @Transactional
     public Food patchFood(String id, Food foodDetails) {
         Food food = getFoodById(id)
                 .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
-        if (foodDetails.getName() != null) food.setName(foodDetails.getName());
-        if (foodDetails.getDescription() != null) food.setDescription(foodDetails.getDescription());
-        if (foodDetails.getImage() != null) food.setImage(foodDetails.getImage());
-        if (foodDetails.getPrice() != 0) food.setPrice(foodDetails.getPrice());
-        if (foodDetails.getIngredients() != null) food.setIngredients(foodDetails.getIngredients());
-        if (foodDetails.getCategory() != null) food.setCategory(foodDetails.getCategory());
+        if (foodDetails.getName() != null)
+            food.setName(foodDetails.getName());
+        if (foodDetails.getDescription() != null)
+            food.setDescription(foodDetails.getDescription());
+        if (foodDetails.getImage() != null)
+            food.setImage(foodDetails.getImage());
+        if (foodDetails.getPrice() != 0)
+            food.setPrice(foodDetails.getPrice());
+        if (foodDetails.getIngredients() != null)
+            food.setIngredients(foodDetails.getIngredients());
+        if (foodDetails.getCategory() != null)
+            food.setCategory(foodDetails.getCategory());
         // Nếu muốn cập nhật available:
         food.setAvailable(foodDetails.isAvailable());
         return foodRepository.save(food);
     }
-} 
+}
