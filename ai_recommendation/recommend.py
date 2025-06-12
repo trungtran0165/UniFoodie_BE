@@ -75,6 +75,41 @@ def get_user_purchase_history(user_id):
         print(f"Error getting purchase history for user {user_id}: {e}")
         return []
 
+def get_user_preferred_ingredients(user_foods):
+    """
+    Phân tích và trích xuất nguyên liệu từ lịch sử mua hàng của user
+    """
+    try:
+        preferred_ingredients = {}
+        
+        for food_id in user_foods:
+            try:
+                # Tìm món ăn trong database
+                food_indices = df[df['_id'] == str(food_id)].index
+                if len(food_indices) == 0:
+                    try:
+                        food_indices = df[df['id'] == int(food_id)].index
+                    except (ValueError, TypeError):
+                        continue
+                
+                if len(food_indices) > 0:
+                    food_ingredients = df.iloc[food_indices[0]]['ingredients']
+                    if isinstance(food_ingredients, list):
+                        # Đếm tần suất xuất hiện của mỗi nguyên liệu
+                        for ingredient in food_ingredients:
+                            ingredient = str(ingredient).lower().strip()
+                            preferred_ingredients[ingredient] = preferred_ingredients.get(ingredient, 0) + 1
+            except Exception as e:
+                print(f"Error processing food ingredients: {e}")
+                continue
+        
+        # Sắp xếp nguyên liệu theo tần suất xuất hiện
+        sorted_ingredients = sorted(preferred_ingredients.items(), key=lambda x: x[1], reverse=True)
+        return [ing[0] for ing in sorted_ingredients]
+    except Exception as e:
+        print(f"Error in get_user_preferred_ingredients: {e}")
+        return []
+
 def recommend_by_food(food_id, num_results=3):
     try:
         # Convert food_id to string for comparison
@@ -161,61 +196,118 @@ def recommend_by_ingredients(ingredients, num_results=3):
         
     return result
 
-def recommend(user_id, num_results=3):
+
+def calculate_combined_score(food_id, user_foods, ingredients=None):
+    """
+    Tính toán điểm kết hợp dựa trên cả lịch sử mua hàng và nguyên liệu
+    """
+    try:
+        # Lấy index của food
+        food_indices = df[df['_id'] == str(food_id)].index
+        if len(food_indices) == 0:
+            try:
+                food_indices = df[df['id'] == int(food_id)].index
+            except (ValueError, TypeError):
+                return 0
+        
+        if len(food_indices) == 0:
+            return 0
+            
+        idx = food_indices[0]
+        
+        # Tính điểm dựa trên lịch sử mua hàng
+        history_score = 0
+        if user_foods:
+            for user_food in user_foods:
+                try:
+                    user_food_indices = df[df['_id'] == str(user_food)].index
+                    if len(user_food_indices) == 0:
+                        try:
+                            user_food_indices = df[df['id'] == int(user_food)].index
+                        except (ValueError, TypeError):
+                            continue
+                    
+                    if len(user_food_indices) > 0:
+                        user_idx = user_food_indices[0]
+                        history_score += cosine_sim[idx][user_idx]
+                except Exception as e:
+                    print(f"Error calculating history score: {e}")
+                    continue
+        
+        # Tính điểm dựa trên nguyên liệu
+        ingredient_score = 0
+        if user_foods:
+            # Lấy nguyên liệu ưa thích từ lịch sử mua hàng
+            preferred_ingredients = get_user_preferred_ingredients(user_foods)
+            food_ingredients = df.iloc[idx]['ingredients']
+            
+            if isinstance(food_ingredients, list):
+                # Đếm số nguyên liệu trùng khớp với nguyên liệu ưa thích
+                matching_ingredients = sum(1 for ing in preferred_ingredients if any(ing.lower() in str(fi).lower() for fi in food_ingredients))
+                ingredient_score = matching_ingredients / len(preferred_ingredients) if preferred_ingredients else 0
+        
+        # Kết hợp điểm số với trọng số mới
+        history_weight = 0.4  # Giảm trọng số lịch sử xuống 40%
+        ingredient_weight = 0.6  # Tăng trọng số nguyên liệu lên 60%
+        
+        combined_score = (history_score * history_weight) + (ingredient_score * ingredient_weight)
+        
+        return combined_score
+    except Exception as e:
+        print(f"Error in calculate_combined_score: {e}")
+        return 0
+
+def recommend(user_id, ingredients=None, num_results=3):
     try:
         # Lấy lịch sử mua hàng của user
         user_foods = get_user_purchase_history(user_id)
         
         if not user_foods:
-            # Nếu user chưa có lịch sử mua hàng, trả về các món phổ biến
+            # Nếu không có lịch sử mua hàng, trả về món ngẫu nhiên
             print(f"No purchase history for user {user_id}, returning random recommendations")
             result = df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
             for item in result:
                 item['food_id'] = item['_id']
             return result
         
-        # Tính tổng similarity score cho mỗi food
-        total_scores = np.zeros(len(df))
-        valid_foods = 0
+        # Tính điểm kết hợp cho tất cả món ăn
+        scores = []
+        for idx, row in df.iterrows():
+            food_id = row['_id']
+            score = calculate_combined_score(food_id, user_foods)
+            scores.append((idx, score))
         
-        for food_id in user_foods:
-            try:
-                # Try to find by _id first, then by numeric id
-                food_indices = df[df['_id'] == str(food_id)].index
-                if len(food_indices) == 0:
-                    try:
-                        food_indices = df[df['id'] == int(food_id)].index
-                    except (ValueError, TypeError):
-                        pass
-                        
-                if len(food_indices) > 0:
-                    idx = food_indices[0]
-                    total_scores += cosine_sim[idx]
-                    valid_foods += 1
-                else:
-                    print(f"Food ID {food_id} not found in recommendation data")
-            except Exception as e:
-                print(f"Error processing food_id {food_id}: {e}")
-                continue
-        
-        if valid_foods == 0:
-            print(f"No valid foods found for user {user_id}, returning random recommendations")
-            result = df.sample(n=num_results)[['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
-            for item in result:
-                item['food_id'] = item['_id']
-            return result
+        # Sắp xếp theo điểm số
+        scores.sort(key=lambda x: x[1], reverse=True)
         
         # Lấy top N items (loại bỏ các items user đã mua)
-        top_indices = total_scores.argsort()[-num_results-len(user_foods):][::-1]
-        top_indices = [i for i in top_indices if df.iloc[i]['_id'] not in user_foods and str(df.iloc[i].get('id', '')) not in user_foods][:num_results]
+        top_indices = [i[0] for i in scores if df.iloc[i[0]]['_id'] not in user_foods][:num_results]
         
         # Trả về food details
         result = df.iloc[top_indices][['_id', 'id', 'name', 'description', 'image', 'price', 'ingredients', 'category']].to_dict('records')
         
-        # Add food_id field for consistency with frontend
-        for item in result:
+        # Add food_id field và điểm số cho mỗi item
+        for i, item in enumerate(result):
             item['food_id'] = item['_id']
+            item['score'] = scores[i][1]  # Thêm điểm số vào kết quả
             
+            # Lấy nguyên liệu ưa thích từ lịch sử
+            preferred_ingredients = get_user_preferred_ingredients(user_foods)
+            food_ingredients = item['ingredients']
+            
+            # Tìm các nguyên liệu trùng khớp
+            matching_ingredients = []
+            if isinstance(food_ingredients, list):
+                for ing in preferred_ingredients:
+                    if any(ing.lower() in str(fi).lower() for fi in food_ingredients):
+                        matching_ingredients.append(ing)
+            
+            # Thêm lý do đề xuất với nguyên liệu cụ thể
+            if matching_ingredients:
+                item['reason'] = f"Được đề xuất vì có chứa các nguyên liệu bạn thích: {', '.join(matching_ingredients[:3])}"
+            else:
+                item['reason'] = "Được đề xuất dựa trên lịch sử mua hàng của bạn"
+        
         print(f"Generated {len(result)} recommendations for user {user_id}")
         return result
         
