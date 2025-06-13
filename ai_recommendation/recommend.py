@@ -21,11 +21,33 @@ def load_data_from_db():
 df = load_data_from_db()
 
 # Tạo item features từ ingredients và category
-df['ingredients'] = df['ingredients'].fillna('')
-df['category'] = df['category'].fillna('')
+# Handle ingredients - convert list to string if needed
+def process_ingredients(ingredients):
+    if pd.isna(ingredients) or ingredients == '':
+        return ''
+    elif isinstance(ingredients, list):
+        # If ingredients is a list, join with spaces
+        return ' '.join(str(item) for item in ingredients if item)
+    else:
+        # If ingredients is already a string, return as is
+        return str(ingredients)
+
+def process_category(category):
+    if pd.isna(category) or category == '':
+        return ''
+    elif isinstance(category, list):
+        # If category is a list, join with spaces
+        return ' '.join(str(item) for item in category if item)
+    else:
+        # If category is already a string, return as is
+        return str(category)
+
+# Apply processing functions
+df['ingredients_processed'] = df['ingredients'].apply(process_ingredients)
+df['category_processed'] = df['category'].apply(process_category)
 
 # Kết hợp ingredients và category thành một text
-df['features'] = df['ingredients'] + ' ' + df['category']
+df['features'] = df['ingredients_processed'] + ' ' + df['category_processed']
 
 # Tạo TF-IDF vectorizer
 tfidf = TfidfVectorizer(stop_words='english')
@@ -137,7 +159,7 @@ def recommend_by_ingredients(ingredients, num_results=3):
     # Tạo mask cho các món có chứa tất cả ingredients
     contains_all_ingredients = np.ones(len(df), dtype=bool)
     for ingredient in ingredients:
-        contains_all_ingredients &= df['ingredients'].str.contains(ingredient, case=False, na=False)
+        contains_all_ingredients &= df['ingredients_processed'].str.contains(ingredient, case=False, na=False)
     
     # Nếu có món chứa tất cả ingredients, chỉ lấy những món đó
     if np.any(contains_all_ingredients):
