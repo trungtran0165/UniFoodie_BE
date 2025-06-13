@@ -12,4 +12,5 @@ db = client[DB_NAME]
 # Collections
 foods_collection = db['foods']
 users_collection = db['users']
-orders_collection = db['orders'] 
+orders_collection = db['orders']
+favourites_collection = db['favourites']
