@@ -110,6 +110,9 @@ def get_recommendations_by_ingredients():
 def get_recommendations_by_food(food_id):
     try:
         logger.info(f"Looking for food with ID: {food_id}")
+        user_id = request.args.get('userId')  # Thêm tham số userId từ query string
+        
+        logger.info(f"User ID from query: {user_id}")
         
         # Verify food exists - try both ObjectId and numeric id
         query_conditions = []
@@ -154,7 +157,8 @@ def get_recommendations_by_food(food_id):
             }), 404
 
         logger.info(f"Found food: {food.get('name', 'Unknown')}")
-        recommendations = recommend_by_food(food_id)  # Pass as string, let recommend_by_food handle it
+        # Truyền thêm user_id vào hàm recommend_by_food
+        recommendations = recommend_by_food(food_id, user_id)
         return jsonify({
             'status': 'success',
             'data': recommendations

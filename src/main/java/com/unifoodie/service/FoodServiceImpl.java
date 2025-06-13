@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+import org.bson.types.ObjectId;
 
 @Service
 public class FoodServiceImpl implements FoodService {
@@ -75,6 +76,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     @Transactional
     public Food createFood(Food food) {
+        // MongoDB will auto-generate _id if not set
         return foodRepository.save(food);
     }
 
@@ -83,6 +85,7 @@ public class FoodServiceImpl implements FoodService {
     public Food updateFood(String id, Food foodDetails) {
         Food food = getFoodById(id)
                 .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
+        // Update fields - _id is not updated
         food.setName(foodDetails.getName());
         food.setDescription(foodDetails.getDescription());
         food.setImage(foodDetails.getImage());
@@ -104,21 +107,7 @@ public class FoodServiceImpl implements FoodService {
     @Override
     @Transactional
     public void deleteFood(String id) {
-        try {
-            // Check if food exists first
-            Optional<Food> existingFood = getFoodById(id);
-            if (existingFood.isPresent()) {
-                // Delete by ObjectId (_id)
-                foodRepository.deleteById(id);
-                System.out.println("Successfully deleted food with ObjectId: " + id);
-            } else {
-                System.err.println("Cannot delete: Food not found with id: " + id);
-                throw new RuntimeException("Food not found with id: " + id);
-            }
-        } catch (Exception e) {
-            System.err.println("Error deleting food with id: " + id + ", error: " + e.getMessage());
-            throw new RuntimeException("Error deleting food with id: " + id, e);
-        }
+        foodRepository.deleteById(id);
     }
 
     @Override
@@ -126,18 +115,12 @@ public class FoodServiceImpl implements FoodService {
     public Food patchFood(String id, Food foodDetails) {
         Food food = getFoodById(id)
                 .orElseThrow(() -> new RuntimeException("Food not found with id: " + id));
-        if (foodDetails.getName() != null)
-            food.setName(foodDetails.getName());
-        if (foodDetails.getDescription() != null)
-            food.setDescription(foodDetails.getDescription());
-        if (foodDetails.getImage() != null)
-            food.setImage(foodDetails.getImage());
-        if (foodDetails.getPrice() != 0)
-            food.setPrice(foodDetails.getPrice());
-        if (foodDetails.getIngredients() != null)
-            food.setIngredients(foodDetails.getIngredients());
-        if (foodDetails.getCategory() != null)
-            food.setCategory(foodDetails.getCategory());
+        if (foodDetails.getName() != null) food.setName(foodDetails.getName());
+        if (foodDetails.getDescription() != null) food.setDescription(foodDetails.getDescription());
+        if (foodDetails.getImage() != null) food.setImage(foodDetails.getImage());
+        if (foodDetails.getPrice() != 0) food.setPrice(foodDetails.getPrice());
+        if (foodDetails.getIngredients() != null) food.setIngredients(foodDetails.getIngredients());
+        if (foodDetails.getCategory() != null) food.setCategory(foodDetails.getCategory());
         // Nếu muốn cập nhật available:
         food.setAvailable(foodDetails.isAvailable());
         return foodRepository.save(food);
