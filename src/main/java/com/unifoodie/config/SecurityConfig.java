@@ -52,8 +52,12 @@ public class SecurityConfig implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép tất cả origins để tránh lỗi CORS khi deploy
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        // Cấu hình domains được phép truy cập
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:5173", // Development
+                "http://localhost:3000", // Development alternative
+                "https://ie-303-fe-main-6ewz.vercel.app/" // Vercel domains (thay thế bằng domain cụ thể sau khi deploy)
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
